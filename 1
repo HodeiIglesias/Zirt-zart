@@ -1,10 +1,217 @@
 import random
-n = random.randint(1, 100)
-for i in range(5):
-    g = int(input("Adivina: "))
-    if g == n: print("¡Correcto!"); break
-    if i == 4: print("Perdiste. Era", n)
-    elif i == 0: print("Está entre", n-20, "y", n+20)
-    elif i == 1: print("Es", "mayor" if n > g else "menor")
-    elif i == 2: print("Acaba en", n % 10)
-    elif i == 3: print("Está entre", sorted([n]+random.sample([x for x in range(1,101) if x!=n],4)))
+
+# Lista de primos para pistas de múltiplos/divisibilidad
+primos = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
+          31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
+          73, 79, 83, 89, 97, 101, 103, 107, 109, 113]
+
+# Textos y pistas en 4 idiomas
+textos = {
+    "es": {
+        "saludo": "¡Hola, {nombre}! Bienvenido a 'Adivina el número'.",
+        "reglas": "Tienes que adivinar el número secreto en el rango elegido. En cada intento recibirás una pista diferente e inteligente. ¡Suerte!",
+        "elige_modo": "Elige modo de juego:\n1. Número entre 1 y 50\n2. Número entre 1 y 100\n3. Número entre 1 y 250\n4. Número entre 1 y 500\n5. Número entre 1 y 750\n6. Número entre 1 y 1000",
+        "elige_idioma": "Elige el idioma (es, eu, ca, gl): ",
+        "pide_nombre": "¿Cuál es tu nombre? ",
+        "pide_numero": "Introduce un número: ",
+        "error_num": "Número inválido, intenta de nuevo.",
+        "acertaste": "¡Felicidades, {nombre}! ¡Has acertado el número {numero} en {intentos} intentos!",
+        "perdiste": "Lo siento, {nombre}. No te quedan intentos. El número era {numero}.",
+        "intentos_restantes": "{intento}. intento de {total}",
+        "inicio_juego": "¡Comencemos! Adivina un número entre {min} y {max}.",
+        "pista_par": "El número es par.",
+        "pista_impar": "El número es impar.",
+        "pista_multiplo": "El número es múltiplo de {n}.",
+        "pista_divisible": "El número es divisible por {n}.",
+        "pista_mayor_menor": "El número es mayor que {x} pero menor que {z}.",
+        "pista_multiplicable": "El número puede multiplicarse por {n} para dar un entero.",
+        "pista_suma_par": "La suma de los dígitos es par.",
+        "pista_suma_impar": "La suma de los dígitos es impar.",
+        "pista_cercano_10": "El número está cerca de un múltiplo de 10.",
+        "pista_cercano_5": "El número está cerca de un múltiplo de 5."
+    },
+    "eu": {
+        "saludo": "Kaixo, {nombre}! Ongi etorri 'Zenbakia Asmatu' jokoan.",
+        "reglas": "Aukeratutako tarteko zenbakia asmatu behar duzu. Saiaker bakoitzean pista adimentsu eta ezberdin bat jasoko duzu. Zorte on!",
+        "elige_modo": "Aukeratu joko modua:\n1. 1 eta 50 arteko zenbakia\n2. 1 eta 100 arteko zenbakia\n3. 1 eta 250 arteko zenbakia\n4. 1 eta 500 arteko zenbakia\n5. 1 eta 750 arteko zenbakia\n6. 1 eta 1000 arteko zenbakia",
+        "elige_idioma": "Hizkuntza hautatu (es, eu, ca, gl): ",
+        "pide_nombre": "Zein da zure izena? ",
+        "pide_numero": "Sartu zenbaki bat: ",
+        "error_num": "Zenbaki baliogabea, saiatu berriro.",
+        "acertaste": "Zorionak, {nombre}! {intentos} saiakeratan {numero} asmatu duzu!",
+        "perdiste": "Barkatu, {nombre}. Saiakerarik ez. Zenbakia {numero} zen.",
+        "intentos_restantes": "{intento}. saiakera {total}tik",
+        "inicio_juego": "Hasi gaitezen! Asmatu 1 eta {max} arteko zenbaki bat.",
+        "pista_par": "Zenbakia bikaina da.",
+        "pista_impar": "Zenbakia bikoitia da.",
+        "pista_multiplo": "Zenbakia {n}ren biderkadura da.",
+        "pista_divisible": "Zenbakia {n}z zatitzen da.",
+        "pista_mayor_menor": "Zenbakia {x} baino handiagoa eta {z} baino txikiagoa da.",
+        "pista_multiplicable": "Zenbakia {n} biderkatu daiteke oso zenbaki bat emateko.",
+        "pista_suma_par": "Zenbakiaren zifraren batura bikaina da.",
+        "pista_suma_impar": "Zenbakiaren zifraren batura bikoitia da.",
+        "pista_cercano_10": "Zenbakia hamarretako biderkadura baten ondoan dago.",
+        "pista_cercano_5": "Zenbakia bostetako biderkadura baten ondoan dago."
+    },
+    "ca": {
+        "saludo": "Hola, {nombre}! Benvingut a 'Endevina el número'.",
+        "reglas": "Has d'endevinar el número secret dins del rang triat. En cada intent rebràs una pista intel·ligent diferent. Sort!",
+        "elige_modo": "Tria el mode de joc:\n1. Número entre 1 i 50\n2. Número entre 1 i 100\n3. Número entre 1 i 250\n4. Número entre 1 i 500\n5. Número entre 1 i 750\n6. Número entre 1 i 1000",
+        "elige_idioma": "Tria l'idioma (es, eu, ca, gl): ",
+        "pide_nombre": "Quin és el teu nom? ",
+        "pide_numero": "Introdueix un número: ",
+        "error_num": "Número invàlid, intenta-ho de nou.",
+        "acertaste": "Felicitats, {nombre}! Has encertat el número {numero} en {intentos} intents!",
+        "perdiste": "Ho sentim, {nombre}. No et queden intents. El número era {numero}.",
+        "intentos_restantes": "{intento}. intent de {total}",
+        "inicio_juego": "Comencem! Endevina un número entre 1 i {max}.",
+        "pista_par": "El número és parell.",
+        "pista_impar": "El número és senar.",
+        "pista_multiplo": "El número és múltiple de {n}.",
+        "pista_divisible": "El número és divisible per {n}.",
+        "pista_mayor_menor": "El número és més gran que {x} però més petit que {z}.",
+        "pista_multiplicable": "El número es pot multiplicar per {n} per donar un enter.",
+        "pista_suma_par": "La suma dels dígits és parell.",
+        "pista_suma_impar": "La suma dels dígits és senar.",
+        "pista_cercano_10": "El número està a prop d'un múltiple de 10.",
+        "pista_cercano_5": "El número està a prop d'un múltiple de 5."
+    },
+    "gl": {
+        "saludo": "Ola, {nombre}! Benvido a 'Adiviña o número'.",
+        "reglas": "Tes que adiviñar o número secreto no rango elixido. En cada intento recibirás unha pista intelixente diferente. Boa sorte!",
+        "elige_modo": "Elixe o modo de xogo:\n1. Número entre 1 e 50\n2. Número entre 1 e 100\n3. Número entre 1 e 250\n4. Número entre 1 e 500\n5. Número entre 1 e 750\n6. Número entre 1 e 1000",
+        "elige_idioma": "Escolle o idioma (es, eu, ca, gl): ",
+        "pide_nombre": "Cal é o teu nome? ",
+        "pide_numero": "Introduce un número: ",
+        "error_num": "Número inválido, tenta de novo.",
+        "acertaste": "Parabéns, {nombre}! Acerteches o número {numero} en {intentos} intentos!",
+        "perdiste": "Sinto, {nombre}. Non che quedan intentos. O número era {numero}.",
+        "intentos_restantes": "Intento {intento} de {total}",
+        "inicio_juego": "Imos comezar! Adiviña un número entre 1 e {max}.",
+        "pista_par": "O número é par.",
+        "pista_impar": "O número é impar.",
+        "pista_multiplo": "O número é múltiplo de {n}.",
+        "pista_divisible": "O número é divisible por {n}.",
+        "pista_mayor_menor": "O número é maior que {x} pero menor que {z}.",
+        "pista_multiplicable": "O número pode multiplicarse por {n} para dar un enteiro.",
+        "pista_suma_par": "A suma dos díxitos é par.",
+        "pista_suma_impar": "A suma dos díxitos é impar.",
+        "pista_cercano_10": "O número está preto dun múltiplo de 10.",
+        "pista_cercano_5": "O número está preto dun múltiplo de 5."
+    }
+}
+
+def suma_digitos(n):
+    return sum(int(d) for d in str(n))
+
+def cercano_multiplo(n, base=10, rango=2):
+    """Devuelve True si n está dentro de 'rango' unidades de un múltiplo de base."""
+    mod = n % base
+    return mod <= rango or mod >= base - rango
+
+def generar_pista_inteligente(numero, minimo, maximo, usadas, idioma):
+    p = textos[idioma]
+    pistas = []
+    # Par o impar
+    if numero % 2 == 0:
+        pistas.append(p["pista_par"])
+    else:
+        pistas.append(p["pista_impar"])
+    # múltiplo de primo (elige uno que divida)
+    mult_primos = [x for x in primos if x <= maximo and numero % x == 0]
+    if mult_primos:
+        pistas.append(p["pista_multiplo"].format(n=random.choice(mult_primos)))
+    # divisible por primo (igual que múltiplo, pero frase distinta)
+    div_primos = [x for x in primos if x <= maximo and numero % x == 0]
+    if div_primos:
+        pistas.append(p["pista_divisible"].format(n=random.choice(div_primos)))
+    # número más alto que x pero menor que z
+    if maximo - minimo >= 10:
+        x = random.randint(minimo, numero-1) if numero-1 > minimo else minimo
+        z = random.randint(numero+1, maximo) if numero+1 < maximo else maximo
+        if x < numero < z:
+            pistas.append(p["pista_mayor_menor"].format(x=x, z=z))
+    # número puede multiplicarse por n para dar entero (igual a múltiplo)
+    if mult_primos:
+        pistas.append(p["pista_multiplicable"].format(n=random.choice(mult_primos)))
+    # suma de dígitos par o impar
+    if suma_digitos(numero) % 2 == 0:
+        pistas.append(p["pista_suma_par"])
+    else:
+        pistas.append(p["pista_suma_impar"])
+    # cercano a múltiplo de 10 o 5
+    if cercano_multiplo(numero, 10, 2):
+        pistas.append(p["pista_cercano_10"])
+    if cercano_multiplo(numero, 5, 1):
+        pistas.append(p["pista_cercano_5"])
+
+    # Quitar pistas repetidas
+    pistas_unicas = list(set(pistas))
+    # Quitar las que ya se usaron
+    pistas_disponibles = [pi for pi in pistas_unicas if pi not in usadas]
+    if pistas_disponibles:
+        pista = random.choice(pistas_disponibles)
+    else:
+        pista = random.choice(pistas_unicas)  # repetir si no queda
+    usadas.add(pista)
+    return pista
+
+def juego():
+    # Elegir idioma al inicio
+    idioma = ""
+    while idioma not in textos:
+        idioma = input(textos["es"]["elige_idioma"]).strip().lower()
+    p = textos[idioma]
+
+    nombre = input(p["pide_nombre"])
+    print(p["saludo"].format(nombre=nombre))
+    print(p["reglas"])
+    print(p["elige_modo"])
+    modo = 0
+    while modo not in range(1,7):
+        try:
+            modo = int(input("> "))
+        except:
+            pass
+
+    limites = {
+        1: 50,
+        2: 100,
+        3: 250,
+        4: 500,
+        5: 750,
+        6: 1000
+    }
+    maximo = limites[modo]
+    minimo = 1
+
+    numero_secreto = random.randint(minimo, maximo)
+    intentos_max = 10
+
+    print(p["inicio_juego"].format(min=minimo, max=maximo))
+
+    usadas = set()
+    for intento in range(1, intentos_max + 1):
+        print(p["intentos_restantes"].format(intento=intento, total=intentos_max))
+        while True:
+            try:
+                guess = int(input(p["pide_numero"]))
+                if minimo <= guess <= maximo:
+                    break
+                else:
+                    print(p["error_num"])
+            except:
+                print(p["error_num"])
+
+        if guess == numero_secreto:
+            print(p["acertaste"].format(nombre=nombre, numero=numero_secreto, intentos=intento))
+            break
+        else:
+            pista = generar_pista_inteligente(numero_secreto, minimo, maximo, usadas, idioma)
+            print(pista)
+    else:
+        print(p["perdiste"].format(nombre=nombre, numero=numero_secreto))
+
+
+if __name__ == "__main__":
+    juego()
